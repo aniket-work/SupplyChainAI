@@ -6,7 +6,7 @@ import sys
 # Define the diagrams
 diagrams = {
     "title": """
-    %%{init: {'theme': 'dark', 'themeVariables': { 'darkMode': true, 'fontFamily': 'Inter', 'primaryColor': '#BB2528', 'secondaryColor': '#006400', 'tertiaryColor': '#fff'}}}%%
+    %%{init: {'theme': 'default', 'themeVariables': { 'mainBkg': '#ffffff', 'textColor': '#000000', 'lineColor': '#000000'}}}%%
     mindmap
       root((Autonomous RFP<br/>Response System))
         (Input Processing)
