@@ -1,57 +1,49 @@
-import logging
-from src.document_loader import DocumentProcessor
-from src.knowledge_base import ContextRetriever
-from src.agents import ProposalDrafter, ComplianceOfficer
+import sys
+import os
 
-# Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='[%(name)s] %(message)s',
-    datefmt='%H:%M:%S'
-)
-logger = logging.getLogger("Orchestrator")
+# Ensure we can import from src
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-class RFPOrchestrator:
-    def __init__(self):
-        self.loader = DocumentProcessor()
-        self.retriever = ContextRetriever()
-        self.drafter = ProposalDrafter()
-        self.compliance = ComplianceOfficer()
+from src.knowledge_base import KnowledgeBase
+from src.recommendation_engine import RecommendationEngine
 
-    def run(self, rfp_path: str):
-        logger.info(f"🚀 Starting RFP Process for {rfp_path}")
+def main():
+    print("--- Starting SupplyChainAI Recommendation Engine ---")
+
+    # 1. Initialize Knowledge Base
+    kb = KnowledgeBase()
+    vendors = kb.get_all_vendors()
+    print(f"Loaded {len(vendors)} vendors from Knowledge Base.")
+
+    # 2. Initialize and Fit Recommendation Engine
+    engine = RecommendationEngine()
+    engine.fit(vendors)
+
+    # 3. Define Test Queries
+    queries = [
+        "Need a fast logistics provider for frozen goods in Europe",
+        "Sustainable packaging for electronics",
+        "High quality precision manufacturing for chips",
+        "Automated assembly line robots",
+        "Cloud hosting for healthcare data"
+    ]
+
+    # 4. Run Queries
+    print("\n--- Running Search Queries ---")
+    for query in queries:
+        print(f"\nQuery: '{query}'")
+        results = engine.search(query)
         
-        # Step 1: Ingest
-        requirements = self.loader.process_rfp(rfp_path)
-        
-        final_proposal = []
-        
-        # Step 2: Process Loop
-        for i, req in enumerate(requirements, 1):
-            logger.info(f"--- Processing Requirement {i}/{len(requirements)} ---")
-            
-            # Retrieve
-            context = self.retriever.retrieve(req)
-            
-            # Draft
-            draft = self.drafter.draft_section(req, context)
-            
-            # Review Loop
-            approved = False
-            attempts = 0
-            while not approved and attempts < 3:
-                is_valid, feedback = self.compliance.review_draft(draft)
-                if is_valid:
-                    approved = True
-                    final_proposal.append(draft)
-                else:
-                    logger.info(f"Iterating on draft due to feedback: {feedback}")
-                    draft = draft + " [Corrected]" # Simulating fix
-                    attempts += 1
-            
-            if not approved:
-                logger.error("Failed to generate compliant draft after 3 attempts.")
-                final_proposal.append("[MANUAL REVIEW REQUIRED]")
-                
-        logger.info("✅ Final Proposal Generated Successfully")
-        return final_proposal
+        if not results:
+            print("  No matching vendors found.")
+        else:
+            for res in results:
+                vendor = res['vendor']
+                score = res['score']
+                print(f"  > [{score:.4f}] {vendor.name} ({vendor.location}) - {vendor.category}")
+                print(f"    Desc: {vendor.description[:80]}...")
+
+    print("\n--- Demo Completed ---")
+
+if __name__ == "__main__":
+    main()
